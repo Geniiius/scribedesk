@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Environnements
+.venv/
+venv/
+env/
+
+# Outils
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Données locales de test (SCRIBEDESK_HOME)
+.testhome/
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Systèmes
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Captures et scripts de rendu ponctuels, à la racine uniquement.
+# Les captures de docs/ sont versionnées : sur GitHub, une image vaut
+# plus qu'un paragraphe pour un outil graphique.
+/*.png
+preview_app.py
+
+# Pistes graphiques locales. L'icône de l'application est peinte à l'exécution
+# (voir _app_icon) : aucun fichier image n'est lu au démarrage, et le dépôt
+# reste sans actif binaire. Ce dossier est un brouillon personnel.
+/assets/

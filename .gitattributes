@@ -1,0 +1,15 @@
+# Normalise les fins de ligne : LF dans le dépôt, natif dans la copie de travail.
+# Indispensable pour un projet développé sous Windows et testé sous Linux.
+* text=auto eol=lf
+
+# Les fichiers d'action embarquent des invites multilignes : leur diff doit
+# rester lisible et stable d'une plateforme à l'autre.
+*.md text eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+
+# Binaires : jamais de conversion.
+*.png binary
+*.ico binary
+*.pdf binary
