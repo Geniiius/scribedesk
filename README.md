@@ -81,6 +81,33 @@ ne transmet que le texte, jamais les valeurs réelles.
 
 ## Installation
 
+### Windows — exécutable autonome
+
+[**Télécharger la dernière version**](https://github.com/Geniiius/scribedesk/releases/latest)
+— un seul fichier `ScribeDesk.exe`, qui n'exige ni Python ni installation.
+Placez-le où vous voulez et lancez-le : une icône apparaît dans la zone de
+notification.
+
+L'exécutable est construit par l'intégration continue à partir du code de ce
+dépôt, et publié avec son empreinte SHA-256. Pour vérifier le fichier
+téléchargé, comparez-la :
+
+```powershell
+Get-FileHash ScribeDesk.exe -Algorithm SHA256
+```
+
+N'étant signé par aucun certificat, il déclenche l'avertissement SmartScreen au
+premier lancement — « Informations complémentaires », puis « Exécuter quand
+même ».
+
+L'exécutable n'embarque **aucun modèle** : il reste à en désigner un, en local
+avec [Ollama](https://ollama.com) ou en ligne avec une clé d'API (voir le
+tableau des fournisseurs ci-dessous). Les préférences et la clé se rangent dans
+le profil de l'utilisateur et le trousseau du système, jamais dans le fichier :
+une mise à jour se fait en remplaçant l'exécutable, sans rien reconfigurer.
+
+### Depuis les sources — Windows, Linux
+
 ScribeDesk n'est pas encore publié sur PyPI. L'installation se fait depuis les
 sources, et réclame **Python 3.11 ou plus récent**.
 
@@ -153,7 +180,7 @@ nombre à onze chiffres n'est un registre national que si sa clé tombe juste.
 
 La détection des **patronymes** est différente, et il faut le dire clairement :
 elle repose sur des heuristiques — mot en capitales, mot suivant une civilité —
-filtrées par une liste de 192 sigles métier et mots français courants. Elle
+filtrées par une liste de 200 sigles métier et mots français courants. Elle
 attrape `DUPONT` et `M. Martin`, laisse passer `SAP`, `RGPD` et `BONJOUR` — mais
 **elle ne remplace pas une relecture humaine**. Un nom écrit en minuscules au fil
 d'une phrase lui échappe.
@@ -226,10 +253,12 @@ git clone https://github.com/Geniiius/scribedesk
 cd scribedesk
 pip install -e ".[gui,dev]"
 
-pytest                 # 271 tests
+pytest
 ruff check src tests
 mypy src               # mode strict
 ```
+
+Sous Linux, exportez `QT_QPA_PLATFORM=offscreen` si Qt réclame un affichage.
 
 Les tests couvrent en priorité ce qui casse en silence : un jeton coupé en deux
 par le découpage réseau, une réponse arrivant avant que l'appelant n'ait branché
@@ -239,6 +268,31 @@ fermer, un `paintEvent` fautif.
 `tests/test_imports.py` verrouille le découpage en couches : il échoue si un
 module du cœur se met à importer Qt ou `httpx`. Sans lui, la séparation ne
 tiendrait qu'à la discipline.
+
+### Variables d'environnement
+
+Aucune n'est nécessaire à l'usage courant : la configuration passe par
+l'interface, et les clés d'API par le trousseau du système. **ScribeDesk ne lit
+aucun fichier `.env`** — déposer un secret en clair dans un dossier de projet
+est précisément ce que ce programme cherche à éviter.
+
+| Variable | Rôle |
+|---|---|
+| `SCRIBEDESK_API_KEY` | Clé d'API en lecture seule, prioritaire sur le trousseau. Pour un conteneur, une intégration continue, ou un poste sans coffre-fort système. |
+| `SCRIBEDESK_HOME` | Force un répertoire unique pour la configuration, l'historique et les actions. Utilisé par les tests, et pratique pour une installation portable. |
+| `QT_QPA_PLATFORM` | Variable Qt. `offscreen` fait tourner les tests d'interface sans écran. |
+
+### Construire l'exécutable Windows
+
+```bash
+pip install pyinstaller
+pyinstaller --noconfirm ScribeDesk.spec
+```
+
+Le résultat est `dist/ScribeDesk.exe`. La recette est lisible dans
+[`ScribeDesk.spec`](ScribeDesk.spec) ; en pratique, la construction est faite
+par l'intégration continue à chaque tag `v*` — voir
+[`.github/workflows/release.yml`](.github/workflows/release.yml).
 
 ## Limites connues
 

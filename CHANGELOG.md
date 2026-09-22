@@ -3,6 +3,34 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Ce projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Ajouté
+
+- **Icône d'application redessinée** : monogramme « SD » sur dégradé indigo,
+  peint en huit résolutions natives (16 à 256 px) pour rester net dans la barre
+  des tâches comme dans le plateau système. Toujours vectoriel : le dépôt reste
+  sans actif binaire.
+- **Exécutable Windows autonome** : `ScribeDesk.exe`, sans Python ni
+  installation, construit par l'intégration continue à chaque tag `v*` et
+  publié avec son empreinte SHA-256. La recette est versionnée
+  (`ScribeDesk.spec`), et la construction refuse de partir si le tag annonce
+  une version que le code ne porte pas.
+- README : section d'installation pour l'utilisateur final, et tableau des
+  variables d'environnement reconnues.
+
+### Modifié
+
+- **Thème sombre par défaut** au lieu du suivi du thème système.
+- Le numéro de version n'est plus déclaré qu'à un seul endroit
+  (`src/scribedesk/__init__.py`) ; `pyproject.toml` le lit.
+
+### Retiré
+
+- `uv.lock` : ni la documentation ni l'intégration continue ne s'en servaient.
+  Un verrou que personne ne lit se périme en silence, et laissait croire que
+  `uv sync` était un chemin d'installation pris en charge.
+
 ## [1.0.0] — 2026-09-15
 
 Première version publique.
