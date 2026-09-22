@@ -130,6 +130,8 @@ class ScribeDeskApp:
         self._popup.submitted.connect(self._run_action)
         self._popup.custom_submitted.connect(self._run_custom)
         self._popup.library_changed.connect(self._on_library_changed)
+        self._popup.history_selected.connect(self._on_history_selected)
+        self._response.history_requested.connect(self._on_history_requested)
         self._response.replace_requested.connect(self._replace_selection)
         self._response.regenerate_requested.connect(self._regenerate)
         self._response.cancel_requested.connect(self._cancel)
@@ -511,6 +513,51 @@ class ScribeDeskApp:
         )
         self._last_request = (action, body, {})
         self._launch(action, body, {})
+
+    def _on_history_requested(self) -> None:
+        """Bascule de la fenêtre de réponse vers le panneau d'historique de la palette."""
+        self._response.hide()
+        self._popup.present_history()
+
+    def _on_history_selected(self, entry: object) -> None:
+        """Affiche le contenu d'une entrée d'historique dans la fenêtre de résultat."""
+        self._popup.hide()
+        action_name = getattr(entry, "action", "Historique")
+        input_text = getattr(entry, "input_preview", "")
+        output_text = getattr(entry, "output_preview", "")
+        elapsed = getattr(entry, "elapsed", 0.0)
+        redacted = getattr(entry, "redacted", 0)
+        provider = getattr(entry, "provider", "")
+        model = getattr(entry, "model", "")
+
+        self._response.begin(f"Historique : {action_name}")
+        if input_text and output_text:
+            self._response.set_comparison(input_text)
+        else:
+            self._response.set_comparison(None)
+
+        if output_text:
+            self._response.append(output_text)
+        elif input_text:
+            self._response.append(input_text)
+        else:
+            self._response.append(
+                "Le texte complet de cette requête n'avait pas été conservé sur ce poste.\n\n"
+                "Par défaut, ScribeDesk applique le principe de minimisation des données "
+                "(RGPD) et ne stocke que les métadonnées pour préserver la vie privée.\n\n"
+                "Pour conserver l'intégralité des prochains textes générés et les relire ici :\n"
+                "1. Ouvrez Préférences (icône ScribeDesk dans la zone de notification)\n"
+                "2. Dans l'onglet « Général », cochez « Y conserver aussi les textes traités »."
+            )
+
+        info = (
+            f"{redacted} valeur(s) masquée(s)" if redacted else "Traitement sans données masquées"
+        )
+        prov = f" · {provider}" + (f" ({model})" if model else "")
+        self._response.finish(f"{info}{prov}", elapsed=elapsed)
+        self._response.show()
+        self._response.raise_()
+        self._response.activateWindow()
 
     def _comparison_source(
         self,

@@ -40,6 +40,9 @@ class ResponseWindow(QWidget):
     cancel_requested = Signal()
     """L'utilisateur interrompt la génération en cours."""
 
+    history_requested = Signal()
+    """L'utilisateur souhaite consulter l'historique."""
+
     adjustment_requested = Signal(str, str)
     """Retouche demandée : ``(consigne, texte affiché)``.
 
@@ -195,6 +198,10 @@ class ResponseWindow(QWidget):
         self._regenerate = QPushButton("Régénérer", self)
         self._regenerate.clicked.connect(self.regenerate_requested)
 
+        self._history = QPushButton("Historique", self)
+        self._history.setToolTip("Consulter l'historique des requêtes")
+        self._history.clicked.connect(self.history_requested)
+
         self._copy = QPushButton("Copier", self)
         self._copy.clicked.connect(self._copy_to_clipboard)
 
@@ -206,6 +213,7 @@ class ResponseWindow(QWidget):
 
         row.addWidget(self._cancel)
         row.addWidget(self._regenerate)
+        row.addWidget(self._history)
         row.addStretch(1)
         row.addWidget(self._copy)
         row.addWidget(self._replace)

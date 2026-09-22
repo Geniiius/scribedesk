@@ -19,7 +19,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 pytest.importorskip("PySide6", reason="interface graphique non installée")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 
 from scribedesk.config import Settings, paths
 from scribedesk.prompts import Action, ActionLibrary, load_library
@@ -1282,6 +1282,31 @@ def test_cliquer_une_entree_la_copie(qapp: QApplication) -> None:
     clipboard = QGuiApplication.clipboard()
     assert clipboard is not None and clipboard.text() == "texte a recopier"
     assert "presse-papier" in popup._count.text()
+
+
+def test_selectionner_une_entree_d_historique_emet_signal(qapp: QApplication) -> None:
+    from scribedesk.history import HistoryEntry
+
+    popup = _popup(qapp)
+    entree = HistoryEntry(
+        timestamp="2026-09-22T20:00:00+00:00",
+        action="Relecture et correction",
+        provider="Groq",
+        output_preview="texte corrige",
+    )
+    popup._history.append(entree)
+    popup._switch_view("history")
+
+    recu: list[object] = []
+    popup.history_selected.connect(recu.append)
+
+    lignes = [
+        w for w in popup._history_panel.findChildren(QWidget) if w.objectName() == "historyRow"
+    ]
+    assert len(lignes) == 1
+    lignes[0].clicked.emit()
+    assert len(recu) == 1
+    assert getattr(recu[0], "output_preview", "") == "texte corrige"
 
 
 def test_un_changement_de_theme_atteint_les_panneaux(qapp: QApplication) -> None:

@@ -138,6 +138,9 @@ class PopupWindow(QWidget):
     library_changed = Signal(object)
     """Émis quand la bibliothèque d'actions est modifiée."""
 
+    history_selected = Signal(object)
+    """Émis quand une entrée d'historique doit être affichée dans la fenêtre de résultat."""
+
     def __init__(
         self,
         library: ActionLibrary,
@@ -204,6 +207,7 @@ class PopupWindow(QWidget):
         self._editor_panel.hide()
 
         self._history_panel = HistoryPanel(self._history, self._palette, card)
+        self._history_panel.entry_selected.connect(self.history_selected)
         layout.addWidget(self._history_panel)
         self._history_panel.hide()
 
@@ -634,6 +638,19 @@ class PopupWindow(QWidget):
         self.raise_()
         self.activateWindow()
         self._custom.setFocus()
+
+    def present_history(self) -> None:
+        """Affiche directement la palette sur le panneau d'historique."""
+        self._user_moved = False
+        self._selection = ""
+        self._cancel_params()
+        self._switch_view("history")
+        self.adjustSize()
+        self._move_near_cursor()
+
+        self.show()
+        self.raise_()
+        self.activateWindow()
 
     def _move_near_cursor(self) -> None:
         """Positionne la fenêtre sans la laisser déborder de l'écran."""

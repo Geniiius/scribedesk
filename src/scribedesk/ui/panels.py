@@ -399,6 +399,8 @@ class HistoryPanel(QWidget):
 
     status = Signal(str)
     entry_copied = Signal(str)
+    entry_selected = Signal(object)
+    """Émis quand une entrée d'historique est cliquée pour être affichée."""
 
     def __init__(self, history: History, palette: Palette, parent: QWidget | None = None):
         super().__init__(parent)
@@ -501,7 +503,11 @@ class HistoryPanel(QWidget):
         supprimer.clicked.connect(lambda _, i=rang: self.delete_entry(i))
         disposition.addWidget(supprimer)
 
-        ligne.clicked.connect(lambda texte=apercu: self.copy_entry(texte))
+        def _on_click() -> None:
+            self.copy_entry(apercu)
+            self.entry_selected.emit(entree)
+
+        ligne.clicked.connect(_on_click)
         return ligne
 
     # -- Opérations -------------------------------------------------------

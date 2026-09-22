@@ -60,6 +60,9 @@ Première version publique.
   les invites françaises livrées ne traduisent pas un ticket anglais.
 - **Éditeur d'actions intégré** : créer, modifier, importer, exporter.
 - **Action de traduction** optionnelle, désactivée par défaut.
+- **Consultation directe de l'historique** : cliquer sur une entrée passée l'affiche
+  dans la fenêtre de résultat (texte, comparaison, durée, jetons masqués), et un
+  bouton « Historique » dans la fenêtre de résultat permet d'y revenir.
 
 ### Moteurs
 
@@ -80,6 +83,6 @@ serveur distant est correctement rapporté comme une sortie réseau.
 
 ### Qualité
 
-290 tests, `mypy` en mode strict, `ruff` sans exception non documentée.
+298 tests, `mypy` en mode strict, `ruff` sans exception non documentée.
 Un test vérifie dans un interpréteur neuf que le cœur n'importe ni Qt ni
 `httpx` — ce qui garde `scribedesk redact` à 214 ms de démarrage.
