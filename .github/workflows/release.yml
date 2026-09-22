@@ -1,0 +1,95 @@
+name: Release
+
+# Publier depuis un poste de développement demande de penser à tout : tester,
+# reconstruire, vérifier le numéro de version, joindre le bon fichier. Un oubli
+# ne se voit qu'après coup, et l'utilisateur n'a aucun moyen de vérifier que
+# l'exécutable téléchargé correspond bien au code publié. Ici, la recette est
+# lisible par tous et le journal de construction est public.
+on:
+  push:
+    tags: ["v*"]
+  # Permet d'éprouver la recette sans publier quoi que ce soit : l'exécutable
+  # est alors déposé en artefact de l'exécution, et aucune release n'est créée.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      # Nécessaire au seul dépôt de la release, et accordé à ce travail
+      # uniquement plutôt qu'à l'ensemble du fichier.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer le projet
+        run: pip install -e ".[gui,dev]" pyinstaller
+
+      # Le tag est la seule source de vérité de ce qui est publié. S'il annonce
+      # une version que le code ne porte pas, mieux vaut s'arrêter ici que
+      # livrer un exécutable qui se présentera sous un faux numéro.
+      - name: Vérifier que le tag correspond à la version du code
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          $version = python -c "import scribedesk; print(scribedesk.__version__)"
+          if ("${{ github.ref_name }}" -ne "v$version") {
+            Write-Error "Tag ${{ github.ref_name }} mais version $version dans le code."
+            exit 1
+          }
+          Write-Output "Version $version confirmee."
+
+      # Publier un exécutable dont la suite de tests échoue serait pire que ne
+      # rien publier : l'utilisateur ne lit pas les journaux de construction.
+      - name: Tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest
+
+      - name: Lint et typage
+        run: |
+          ruff check src tests
+          ruff format --check src tests
+          mypy src
+
+      - name: Construire l'exécutable
+        run: pyinstaller --noconfirm ScribeDesk.spec
+
+      # Une empreinte publiée permet à qui télécharge de vérifier que le fichier
+      # reçu est bien celui que cette construction a produit.
+      - name: Calculer l'empreinte SHA-256
+        run: |
+          $hash = (Get-FileHash dist\ScribeDesk.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  ScribeDesk.exe" | Out-File -Encoding ascii dist\ScribeDesk.exe.sha256
+          Write-Output $hash
+
+      - name: Déposer l'exécutable en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScribeDesk-exe
+          path: |
+            dist/ScribeDesk.exe
+            dist/ScribeDesk.exe.sha256
+
+      # En brouillon : la release n'est visible de personne tant qu'elle n'a pas
+      # été relue et publiée à la main. Le changelog s'y complète à ce moment-là.
+      - name: Créer la release (brouillon)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}"
+          dist/ScribeDesk.exe
+          dist/ScribeDesk.exe.sha256
+          --draft
+          --title "ScribeDesk ${{ github.ref_name }}"
+          --generate-notes

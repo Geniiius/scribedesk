@@ -4,7 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scribedesk"
-version = "1.0.0"
+# La version n'est ecrite qu'une fois, dans src/scribedesk/__init__.py : c'est
+# elle que « scribedesk --version » affiche. Declarée ici en double, elle
+# finissait par diverger de celle que l'utilisateur voit.
+dynamic = ["version"]
 description = "Assistant d'écriture système pour Service Desk, avec anonymisation des données personnelles avant tout envoi à un LLM."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -58,6 +61,9 @@ scribedesk-gui = "scribedesk.__main__:main"
 [project.urls]
 Homepage = "https://github.com/Geniiius/scribedesk"
 Issues = "https://github.com/Geniiius/scribedesk/issues"
+
+[tool.hatch.version]
+path = "src/scribedesk/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/scribedesk"]
