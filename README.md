@@ -1,5 +1,7 @@
 # ScribeDesk
 
+**Français** · [English](docs/README.en.md) · [Español](docs/README.es.md)
+
 **Assistant d'écriture système pour Service Desk — qui n'envoie jamais les données de vos usagers.**
 
 Sélectionnez du texte n'importe où, appuyez sur `Ctrl+Espace`, choisissez une action.
@@ -10,6 +12,10 @@ La différence avec les autres assistants de rédaction tient en une ligne :
 et les valeurs réelles sont réinjectées dans la réponse.** Le fournisseur cloud ne
 voit jamais le nom de l'usager ; vous récupérez un texte complet et directement
 utilisable.
+
+<p align="center">
+  <img src="docs/quick-action.gif" alt="Démonstration du geste rapide Ctrl+Alt+Espace" width="100%">
+</p>
 
 ---
 
@@ -30,21 +36,9 @@ ScribeDesk propose une troisième voie.
 
 ## Comment ça marche
 
-```
-Texte de l'agent
-   « Appeler DUPONT au 02 000 00 00, il n'arrive plus à ouvrir SAP. »
-        │
-        ▼  anonymisation locale
-   « Appeler [[NOM_1]] au [[TEL_1]], il n'arrive plus à ouvrir SAP. »
-        │
-        ▼  ─────── frontière réseau ───────►  modèle (Groq, Mistral, NVIDIA…)
-        │
-        ◄─────────────────────────────────
-   « Appeler [[NOM_1]] au [[TEL_1]] : il ne parvient plus à ouvrir SAP. »
-        │
-        ▼  restauration locale
-   « Appeler DUPONT au 02 000 00 00 : il ne parvient plus à ouvrir SAP. »
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="ScribeDesk Zero-Leak Architecture & Data Pipeline" width="100%">
+</p>
 
 Le fournisseur reçoit une phrase grammaticalement complète — il peut donc la
 corriger correctement — mais vidée de toute donnée identifiante. `SAP` reste
@@ -147,12 +141,41 @@ système, jamais dans un fichier.
 | **OpenAI** | — |
 | *Personnalisé* | Tout point d'accès compatible OpenAI |
 
+## La langue de l'assistant
+
+L'interface et les onze actions livrées sont en français. Les **réponses**, en
+revanche, ne le sont pas nécessairement : Préférences → Langue de l'assistant
+propose `Automatique`, `Français`, `English` et `Español`.
+
+`Automatique` — le défaut — laisse le texte décider : un ticket anglais revient
+corrigé en anglais. Une langue explicite s'impose à la place, quelle que soit
+celle du ticket : c'est le réglage d'une équipe qui reçoit des demandes en
+français mais documente en anglais.
+
+L'ordre de priorité est le suivant, du plus ponctuel au plus général :
+
+1. la langue choisie **dans la palette**, pour cet envoi seulement ;
+2. la **langue de l'assistant**, fixée dans les préférences ;
+3. la langue **détectée** dans le texte sélectionné (français, anglais,
+   espagnol) ;
+4. à défaut, le choix est laissé au modèle, qui voit le texte.
+
+Ce classement place le ponctuel avant le permanent : répondre une seule fois en
+espagnol ne doit pas obliger à ouvrir les préférences, puis à penser à les
+remettre.
+
 ## Les deux raccourcis
 
 | Raccourci | Effet |
 |---|---|
 | `Ctrl+Espace` | Ouvre la palette : 10 actions, consigne libre, historique, éditeur |
 | `Ctrl+Alt+Espace` | Applique l'action par défaut et remplace la sélection |
+
+<p align="center">
+  <img src="docs/palette.png" alt="Palette d'actions (Ctrl+Espace)" width="48%">
+  &nbsp;
+  <img src="docs/result.png" alt="Fenêtre de résultat et comparaison" width="48%">
+</p>
 
 Le second existe parce qu'un relevé d'usage réel montrait que **9 appels sur 10**
 portaient sur la même action, sur des textes de 80 caractères en médiane. Passer

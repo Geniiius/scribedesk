@@ -23,7 +23,7 @@ from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from .config import Settings
-from .language import detect_language
+from .language import LANGUAGE_NAMES, detect_language
 from .privacy import PRESERVE_INSTRUCTION, Redaction, Redactor, StreamRestorer
 from .prompts import Action, ActionLibrary, load_library
 from .providers import Message, Provider, build_provider, join_instructions
@@ -32,6 +32,22 @@ from .secrets import get_api_key
 __all__ = ["Engine", "TransformResult"]
 
 logger = logging.getLogger(__name__)
+
+
+def _impose_language(nom: str) -> str:
+    """Consigne imposant une langue de sortie, quelle que soit celle du texte.
+
+    Le rappel « quelle que soit la langue de ces consignes » n'est pas une
+    précaution de style : les invites livrées sont rédigées en français et
+    demandent explicitement du français. Sans cette phrase, le modèle suit
+    l'invite plutôt que le choix de l'utilisateur.
+    """
+    return (
+        f"Rédige impérativement ta réponse en {nom}, "
+        "quelle que soit la langue du texte fourni ou de ces consignes. "
+        "Applique d'abord la consigne principale, puis livre le résultat "
+        "dans cette langue."
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,11 +184,16 @@ class Engine:
     def _language_directive(self, text: str, action: Action, target: str = "") -> str:
         """Consigne de langue à ajouter, ou chaîne vide s'il n'y a rien à dire.
 
-        Trois cas, du plus explicite au plus implicite :
+        Quatre cas, du plus explicite au plus implicite :
 
-        1. une langue **imposée** par l'utilisateur prime sur tout le reste ;
-        2. sinon, la langue **détectée** dans le texte source ;
-        3. sinon, le choix est délégué au modèle, qui voit le texte.
+        1. une langue choisie **pour cet envoi**, depuis la palette ;
+        2. sinon, la langue de travail fixée dans les **préférences** ;
+        3. sinon, la langue **détectée** dans le texte source ;
+        4. sinon, le choix est délégué au modèle, qui voit le texte.
+
+        Cet ordre place le ponctuel avant le permanent : un réglage qui ne
+        pourrait pas être outrepassé pour un ticket obligerait à ouvrir les
+        préférences pour répondre une fois en anglais.
 
         La détection est faite sur le texte **d'origine**, avant anonymisation :
         remplacer les noms par des jetons appauvrit l'échantillon, déjà court.
@@ -183,12 +204,11 @@ class Engine:
             return ""
 
         if target.strip():
-            return (
-                f"Rédige impérativement ta réponse en {target.strip()}, "
-                "quelle que soit la langue du texte fourni ou de ces consignes. "
-                "Applique d'abord la consigne principale, puis livre le résultat "
-                "dans cette langue."
-            )
+            return _impose_language(target.strip())
+
+        choisie = LANGUAGE_NAMES.get(self.settings.assistant_language, "")
+        if choisie:
+            return _impose_language(choisie)
 
         if not self.settings.respect_source_language:
             return ""

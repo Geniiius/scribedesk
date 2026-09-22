@@ -769,6 +769,21 @@ def test_settings_visibilite_cle_et_enregistrement(
     assert coffre["custom"] == "test_mock_key_123"
 
 
+def test_settings_langue_de_l_assistant(qapp: QApplication) -> None:
+    """Le choix se relit, se collecte, et désactive le réglage qu'il contredit."""
+    window = SettingsWindow(Settings(assistant_language="en"))
+
+    assert window._assistant_language.currentData() == "en"
+    assert window.collect().assistant_language == "en"
+    assert not window._respect_language.isEnabled(), (
+        "imposer une langue rend le suivi du texte source sans objet"
+    )
+
+    window._assistant_language.setCurrentIndex(window._assistant_language.findData("auto"))
+    assert window._respect_language.isEnabled()
+    assert window.collect().assistant_language == "auto"
+
+
 def test_response_prompt_for_input_et_raccourci_ctrl_entree(qapp: QApplication) -> None:
     """prompt_for_input prépare la fenêtre pour la saisie et Ctrl+Entrée émet regenerate."""
     from PySide6.QtCore import QEvent, Qt

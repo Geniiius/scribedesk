@@ -158,6 +158,69 @@ def test_les_reglages_de_traduction_survivent_a_un_aller_retour(tmp_path) -> Non
 
 
 # --------------------------------------------------------------------------
+# Langue de travail choisie dans les préférences
+# --------------------------------------------------------------------------
+
+
+def test_la_langue_des_preferences_s_impose_au_texte() -> None:
+    """Une équipe francophone qui documente en anglais le règle une fois."""
+    messages, _ = _engine(assistant_language="en").prepare(ACTION, "Le serveur ne répond plus")
+    systeme = messages[0].content
+
+    assert "Rédige impérativement ta réponse en anglais" in systeme
+    assert systeme.index("Réponds toujours en français.") < systeme.index("en anglais")
+
+
+def test_auto_laisse_la_detection_decider() -> None:
+    """Valeur par défaut : le comportement d'avant le réglage, inchangé."""
+    messages, _ = _engine(assistant_language="auto").prepare(ACTION, "The password does not work")
+    assert "en anglais" in messages[0].content
+
+    messages, _ = _engine(assistant_language="auto").prepare(ACTION, "Le serveur est tombé")
+    assert "en français" in messages[0].content
+
+
+def test_la_langue_de_la_palette_prime_sur_celle_des_preferences() -> None:
+    """Le ponctuel doit pouvoir outrepasser le permanent.
+
+    Sans cela, répondre une seule fois en espagnol à un usager obligerait à
+    ouvrir les préférences, puis à penser à les remettre.
+    """
+    messages, _ = _engine(assistant_language="en").prepare(
+        ACTION, "Le serveur ne répond plus", target_language="Espagnol"
+    )
+    systeme = messages[0].content
+
+    assert "en Espagnol" in systeme
+    assert "en anglais" not in systeme
+
+
+def test_une_action_de_traduction_ignore_la_langue_des_preferences() -> None:
+    """Elle gère sa propre langue cible, comme pour la langue de la palette."""
+    traduction = Action(name="Traduction", instruction="Traduis.", preserve_language=False)
+    moteur = Engine(
+        Settings(provider=ProviderConfig(key="ollama"), assistant_language="es"),
+        ActionLibrary([traduction]),
+    )
+
+    messages, _ = moteur.prepare(traduction, "Bonjour")
+    assert "Rédige impérativement" not in messages[0].content
+
+
+def test_la_langue_de_travail_survit_a_un_aller_retour(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    origine = Settings(assistant_language="es")
+    relu = Settings.load(origine.save(tmp_path / "settings.toml"))
+
+    assert relu.assistant_language == "es"
+
+
+def test_une_langue_inconnue_ne_fait_rien_de_pire_que_le_defaut() -> None:
+    """Un fichier de préférences écrit à la main ne doit pas casser l'envoi."""
+    messages, _ = _engine(assistant_language="klingon").prepare(ACTION, "The password is wrong")
+    assert "en anglais" in messages[0].content
+
+
+# --------------------------------------------------------------------------
 # Langue imposée depuis la palette
 # --------------------------------------------------------------------------
 

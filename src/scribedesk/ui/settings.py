@@ -231,13 +231,32 @@ class SettingsWindow(QWidget):
             self._default_action.addItem(action.name)
         form.addRow("Action par défaut", self._default_action)
 
+        self._assistant_language = QComboBox(page)
+        for label, value in (
+            ("Automatique — suivre le texte", "auto"),
+            ("Français", "fr"),
+            ("English", "en"),
+            ("Español", "es"),
+        ):
+            self._assistant_language.addItem(label, value)
+        self._assistant_language.setToolTip(
+            "Langue dans laquelle l'assistant rédige ses réponses, quelle que "
+            "soit celle du ticket. « Automatique » laisse le texte décider. "
+            "Une langue choisie dans la palette reste prioritaire pour cet envoi."
+        )
+        form.addRow("Langue de l'assistant", self._assistant_language)
+
         self._respect_language = QCheckBox("Répondre dans la langue du texte sélectionné", page)
         self._respect_language.setToolTip(
             "Les actions livrées sont rédigées en français et imposent le français. "
             "Sans cette option, un ticket anglais ou espagnol reviendrait traduit "
             "en français sans que vous l'ayez demandé."
         )
-        form.addRow("Langue", self._respect_language)
+        form.addRow("", self._respect_language)
+
+        # Une langue imposée rend ce choix sans objet : le laisser actif
+        # laisserait croire qu'il joue encore un rôle.
+        self._assistant_language.currentIndexChanged.connect(self._sync_language_controls)
 
         self._translation_enabled = QCheckBox("Afficher l'action de traduction", page)
         self._translation_enabled.setToolTip(
@@ -304,7 +323,11 @@ class SettingsWindow(QWidget):
         self._hotkey.setText(settings.hotkey)
         self._quick_hotkey.setText(settings.quick_hotkey)
         self._default_action.setCurrentText(settings.default_action)
+        self._assistant_language.setCurrentIndex(
+            max(0, self._assistant_language.findData(settings.assistant_language))
+        )
         self._respect_language.setChecked(settings.respect_source_language)
+        self._sync_language_controls()
         self._translation_enabled.setChecked(settings.translation_enabled)
         self._translation_targets.setText(", ".join(settings.translation_targets))
         self._translation_targets.setEnabled(settings.translation_enabled)
@@ -334,6 +357,7 @@ class SettingsWindow(QWidget):
         settings.hotkey = self._hotkey.text().strip() or "ctrl+space"
         settings.quick_hotkey = self._quick_hotkey.text().strip() or "ctrl+alt+space"
         settings.default_action = self._default_action.currentText().strip()
+        settings.assistant_language = self._assistant_language.currentData()
         settings.respect_source_language = self._respect_language.isChecked()
         settings.translation_enabled = self._translation_enabled.isChecked()
         cibles = tuple(
@@ -346,6 +370,16 @@ class SettingsWindow(QWidget):
         settings.history.store_text = self._history_text.isChecked()
         settings.history.max_entries = self._history_max.value()
         return settings
+
+    def _sync_language_controls(self) -> None:
+        """Grise le suivi de la langue source quand une langue est imposée.
+
+        Les deux réglages se contrediraient : imposer l'anglais et « répondre
+        dans la langue du texte » ne peuvent pas être vrais en même temps. Le
+        moteur tranche déjà en faveur du premier ; l'interface doit le montrer
+        plutôt que de laisser croire à un choix sans effet.
+        """
+        self._respect_language.setEnabled(self._assistant_language.currentData() == "auto")
 
     def _checked_rules(self) -> tuple[str, ...] | None:
         """Renvoie les règles cochées, ou `None` si elles le sont toutes.

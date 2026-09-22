@@ -191,7 +191,20 @@ class Settings:
     """Langues cibles proposées par l'action de traduction."""
 
     theme: str = "dark"
-    locale: str = "fr"
+
+    assistant_language: str = "auto"
+    """Langue dans laquelle l'assistant rédige ses réponses.
+
+    ``auto`` — le défaut — laisse le texte décider : c'est le comportement
+    décrit par `respect_source_language`. Un code de langue (``fr``, ``en``,
+    ``es``) l'impose à la place, quelle que soit la langue du ticket : une
+    équipe qui reçoit des demandes en français mais documente en anglais veut
+    ses notes en anglais, pas dans la langue de l'usager.
+
+    Une langue choisie pour un envoi précis, depuis la palette, reste
+    prioritaire sur ce réglage.
+    """
+
     streaming: bool = True
 
     def enabled_features(self) -> frozenset[str]:
@@ -240,7 +253,7 @@ class Settings:
             translation_targets=tuple(str(v) for v in raw.get("translation_targets", ()))
             or ("Français", "Anglais", "Espagnol", "Néerlandais"),
             theme=str(raw.get("theme", "dark")),
-            locale=str(raw.get("locale", "fr")),
+            assistant_language=str(raw.get("assistant_language", "auto")),
             streaming=bool(raw.get("streaming", True)),
         )
 
@@ -271,7 +284,8 @@ class Settings:
             f"translation_enabled = {_toml(self.translation_enabled)}",
             f"translation_targets = {_toml(self.translation_targets)}",
             f"theme = {_toml(self.theme)}",
-            f"locale = {_toml(self.locale)}",
+            "# auto, fr, en ou es.",
+            f"assistant_language = {_toml(self.assistant_language)}",
             f"streaming = {_toml(self.streaming)}",
             "",
             "[provider]",

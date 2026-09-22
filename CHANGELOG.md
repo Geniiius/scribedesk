@@ -3,44 +3,24 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 Ce projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [1.0.0] — 2026-09-22
 
-### Ajouté
+Première version publique.
 
-- **Icône d'application redessinée** : monogramme « SD » sur dégradé indigo,
-  peint en huit résolutions natives (16 à 256 px) pour rester net dans la barre
-  des tâches comme dans le plateau système. Toujours vectoriel : le dépôt reste
-  sans actif binaire.
+### Exécutable et système
+
 - **Exécutable Windows autonome** : `ScribeDesk.exe`, sans Python ni
   installation, construit par l'intégration continue à chaque tag `v*` et
   publié avec son empreinte SHA-256. La recette est versionnée
   (`ScribeDesk.spec`), et la construction refuse de partir si le tag annonce
   une version que le code ne porte pas.
-- README : section d'installation pour l'utilisateur final, et tableau des
-  variables d'environnement reconnues.
-
-### Modifié
-
-- **Thème sombre par défaut** au lieu du suivi du thème système.
-- Le numéro de version n'est plus déclaré qu'à un seul endroit
-  (`src/scribedesk/__init__.py`) ; `pyproject.toml` le lit.
-
-### Corrigé
-
-- La suite de tests ne touche plus ni au trousseau ni aux préférences réelles
-  de la machine qui l'exécute : elle y déposait une clé et pouvait écraser la
-  configuration de l'utilisateur. Elle passe désormais aussi là où aucun coffre
-  système n'existe — conteneur, serveur, intégration continue.
-
-### Retiré
-
-- `uv.lock` : ni la documentation ni l'intégration continue ne s'en servaient.
-  Un verrou que personne ne lit se périme en silence, et laissait croire que
-  `uv sync` était un chemin d'installation pris en charge.
-
-## [1.0.0] — 2026-09-15
-
-Première version publique.
+- **Icône d'application vectorielle** : monogramme « SD » sur dégradé indigo,
+  peint dynamiquement en huit résolutions natives (16 à 256 px) pour rester net
+  dans la barre des tâches comme dans le plateau système, sans aucun actif binaire.
+- **Thème sombre par défaut** avec dégradés subtils et boutons d'actions teintés.
+- README complet avec captures d'écran réelles, démonstration animée et infographie
+  d'architecture, traduit en **anglais** et en **espagnol** sous forme condensée
+  (`docs/README.en.md`, `docs/README.es.md`).
 
 ### Confidentialité
 
@@ -68,6 +48,10 @@ Première version publique.
   fichiers d'action.
 - **Sélecteur de langue de sortie** : n'importe quelle action peut livrer son
   résultat dans une autre langue, sans passer par une action de traduction.
+- **Langue de l'assistant** (Préférences) : `Automatique`, `Français`,
+  `English` ou `Español`. Les invites livrées sont en français et imposent le
+  français ; ce réglage les outrepasse pour toutes les actions à la fois. Une
+  langue choisie dans la palette reste prioritaire pour l'envoi en cours.
 - **Barre d'ajustement** sous le résultat : affiner par passes successives
   — « plus formel », « plus court » — sans rouvrir la palette.
 - **Vue comparée** original / résultat, ouverte uniquement lorsque la sortie
@@ -96,6 +80,6 @@ serveur distant est correctement rapporté comme une sortie réseau.
 
 ### Qualité
 
-271 tests, `mypy` en mode strict, `ruff` sans exception non documentée.
+290 tests, `mypy` en mode strict, `ruff` sans exception non documentée.
 Un test vérifie dans un interpréteur neuf que le cœur n'importe ni Qt ni
 `httpx` — ce qui garde `scribedesk redact` à 214 ms de démarrage.
