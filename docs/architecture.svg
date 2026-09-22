@@ -1,0 +1,217 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 760" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0d1117; }
+      .box { fill: #161b22; stroke: #30363d; stroke-width: 1.5; rx: 12px; }
+      .box-highlight { fill: #161b22; stroke: #388bfd; stroke-width: 1.5; rx: 12px; }
+      .box-privacy { fill: #161b22; stroke: #238636; stroke-width: 1.5; rx: 12px; }
+      .box-cloud { fill: #161b22; stroke: #8957e5; stroke-width: 1.5; rx: 12px; }
+      .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 600; text-anchor: middle; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 700; fill: #f0f6fc; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 500; fill: #8b949e; }
+      .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #c9d1d9; }
+      .code { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 11.5px; fill: #e6edf3; }
+      .code-token { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 11.5px; fill: #f0883e; font-weight: 600; }
+      .code-pii { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 11.5px; fill: #ff7b72; font-weight: 600; }
+      .code-restored { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 11.5px; fill: #7ee787; font-weight: 600; }
+      .arrow { stroke: #58a6ff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .arrow-dashed { stroke: #8b949e; stroke-width: 1.5; stroke-dasharray: 4,4; fill: none; }
+      .boundary-line { stroke: #da3633; stroke-width: 2; stroke-dasharray: 6,6; }
+      .section-hdr { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #ffffff; }
+      .footer-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 12px; fill: #8b949e; }
+    </style>
+    <marker id="arrowhead-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#58a6ff" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3fb950" />
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#bc8cff" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1060" height="760" class="bg" rx="16" />
+  <rect x="1" y="1" width="1058" height="758" fill="none" stroke="#30363d" stroke-width="1.5" rx="15" />
+
+  <!-- Main Header -->
+  <text x="40" y="48" class="section-hdr">ScribeDesk — Zero-Leak Architecture &amp; Data Pipeline</text>
+  <text x="40" y="70" class="subtitle">System-wide AI writing assistant for Service Desk teams · Reversible in-memory PII tokenization</text>
+
+  <!-- ZONE 1: LOCAL ENVIRONMENT CONTAINER -->
+  <rect x="40" y="95" width="670" height="495" fill="#111620" stroke="#1f2937" stroke-width="1.5" rx="14" />
+  <rect x="55" y="108" width="170" height="24" rx="6" fill="#1f2937" />
+  <text x="140" y="124" class="badge" fill="#58a6ff">LOCAL MACHINE (STRICT RAM)</text>
+
+  <!-- STEP 1: Host Application & Hotkey -->
+  <g transform="translate(60, 145)">
+    <rect width="290" height="150" class="box" />
+    <circle cx="20" cy="22" r="5" fill="#f85149" />
+    <circle cx="34" cy="22" r="5" fill="#e3b341" />
+    <circle cx="48" cy="22" r="5" fill="#3fb950" />
+    <text x="64" y="26" class="title">1. Agent Workspace</text>
+    <text x="20" y="48" class="subtitle">ServiceNow · Jira · Zendesk · Outlook</text>
+    
+    <rect x="16" y="58" width="258" height="48" rx="6" fill="#0d1117" stroke="#21262d" />
+    <text x="24" y="77" class="code">"Call <tspan class="code-pii">DUPONT</tspan> at <tspan class="code-pii">02 000 00 00</tspan>,</text>
+    <text x="24" y="95" class="code">cannot open SAP."</text>
+
+    <!-- Hotkeys -->
+    <rect x="16" y="116" width="122" height="22" rx="4" fill="#21262d" />
+    <text x="77" y="131" class="badge" fill="#c9d1d9">Ctrl+Space (Palette)</text>
+    <rect x="146" y="116" width="128" height="22" rx="4" fill="#21262d" />
+    <text x="210" y="131" class="badge" fill="#58a6ff">Ctrl+Alt+Space (1-Click)</text>
+  </g>
+
+  <!-- ARROW 1 -> 2 -->
+  <path d="M 350 220 L 400 220" class="arrow" marker-end="url(#arrowhead-blue)" />
+
+  <!-- STEP 2: Local Privacy Redaction Engine -->
+  <g transform="translate(410, 145)">
+    <rect width="280" height="215" class="box-privacy" />
+    <text x="20" y="30" class="title" fill="#3fb950">2. Local Privacy Redactor</text>
+    <text x="20" y="50" class="subtitle">Algorithmic Checksums &amp; Context Regex</text>
+
+    <rect x="16" y="62" width="248" height="70" rx="6" fill="#0d1117" stroke="#21262d" />
+    <text x="24" y="80" class="code" fill="#8b949e">✓ IBAN (mod-97), NRN (BE), NIR (FR)</text>
+    <text x="24" y="98" class="code" fill="#8b949e">✓ Names, Phones, Emails, IP/MAC</text>
+    <text x="24" y="116" class="code" fill="#3fb950">✓ Whitelist bypass: SAP, RGPD...</text>
+
+    <!-- Token Vault -->
+    <text x="20" y="152" class="label">Volatile In-Memory Mapping:</text>
+    <rect x="16" y="160" width="248" height="42" rx="6" fill="#0d1117" stroke="#238636" />
+    <text x="24" y="177" class="code">[[NOM_1]] = <tspan class="code-pii">DUPONT</tspan></text>
+    <text x="24" y="193" class="code">[[TEL_1]] = <tspan class="code-pii">02 000 00 00</tspan></text>
+  </g>
+
+  <!-- NETWORK BOUNDARY LINE -->
+  <line x1="740" y1="95" x2="740" y2="590" class="boundary-line" />
+  <rect x="690" y="70" width="100" height="22" rx="4" fill="#da3633" />
+  <text x="740" y="85" class="badge" fill="#ffffff">NETWORK BORDER</text>
+
+  <!-- STEP 3: Network Transfer (Payload) -->
+  <!-- Top Arrow (Outbound) -->
+  <path d="M 690 250 L 780 250" class="arrow" marker-end="url(#arrowhead-blue)" />
+  <rect x="700" y="215" width="80" height="28" rx="5" fill="#161b22" stroke="#388bfd" />
+  <text x="740" y="233" class="badge" fill="#79c0ff">SANITIZED</text>
+
+  <!-- ZONE 2: AI PROVIDER LAYER -->
+  <g transform="translate(790, 145)">
+    <rect width="230" height="445" class="box-cloud" />
+    <text x="20" y="30" class="title" fill="#bc8cff">3. Model Inference</text>
+    <text x="20" y="50" class="subtitle">Cloud or 100% On-Premises</text>
+
+    <!-- Outbound Prompt Payload Box -->
+    <rect x="14" y="65" width="202" height="95" rx="6" fill="#0d1117" stroke="#21262d" />
+    <text x="22" y="85" class="subtitle" fill="#8b949e">Received by LLM:</text>
+    <text x="22" y="105" class="code">"Appeler <tspan class="code-token">[[NOM_1]]</tspan></text>
+    <text x="22" y="123" class="code">au <tspan class="code-token">[[TEL_1]]</tspan>, il n'arrive</text>
+    <text x="22" y="141" class="code">plus à ouvrir SAP."</text>
+
+    <!-- Supported Engines List -->
+    <text x="20" y="185" class="label">Configured Engines:</text>
+    <g transform="translate(16, 195)">
+      <rect x="0" y="0" width="198" height="24" rx="4" fill="#21262d" />
+      <text x="12" y="16" class="code" fill="#7ee787">● Ollama (100% Local)</text>
+      
+      <rect x="0" y="30" width="198" height="24" rx="4" fill="#21262d" />
+      <text x="12" y="46" class="code" fill="#c9d1d9">● Mistral (EU Hosting)</text>
+
+      <rect x="0" y="60" width="198" height="24" rx="4" fill="#21262d" />
+      <text x="12" y="76" class="code" fill="#c9d1d9">● Groq (Ultra-low latency)</text>
+
+      <rect x="0" y="90" width="198" height="24" rx="4" fill="#21262d" />
+      <text x="12" y="106" class="code" fill="#c9d1d9">● NVIDIA NIM</text>
+
+      <rect x="0" y="120" width="198" height="24" rx="4" fill="#21262d" />
+      <text x="12" y="136" class="code" fill="#c9d1d9">● OpenAI / Compatible</text>
+    </g>
+
+    <!-- Return Payload Box -->
+    <rect x="14" y="355" width="202" height="75" rx="6" fill="#0d1117" stroke="#21262d" />
+    <text x="22" y="375" class="subtitle" fill="#8b949e">Inference Result Stream:</text>
+    <text x="22" y="395" class="code">"Appeler <tspan class="code-token">[[NOM_1]]</tspan></text>
+    <text x="22" y="413" class="code">au <tspan class="code-token">[[TEL_1]]</tspan> : il ne..."</text>
+  </g>
+
+  <!-- Return Arrow (Inbound) -->
+  <path d="M 790 490 L 700 490" class="arrow" stroke="#bc8cff" marker-end="url(#arrowhead-purple)" />
+  <rect x="700" y="500" width="80" height="28" rx="5" fill="#161b22" stroke="#8957e5" />
+  <text x="740" y="518" class="badge" fill="#d2a8ff">STREAM</text>
+
+  <!-- STEP 4: Local Stream Restorer -->
+  <g transform="translate(410, 415)">
+    <rect width="280" height="155" class="box-highlight" />
+    <text x="20" y="30" class="title" fill="#58a6ff">4. Local Stream Restorer</text>
+    <text x="20" y="50" class="subtitle">Reversible In-Flight Token Deanonymization</text>
+
+    <rect x="16" y="62" width="248" height="75" rx="6" fill="#0d1117" stroke="#21262d" />
+    <text x="24" y="82" class="code">Re-injects real values in RAM:</text>
+    <text x="24" y="100" class="code"><tspan class="code-token">[[NOM_1]]</tspan> → <tspan class="code-restored">DUPONT</tspan></text>
+    <text x="24" y="118" class="code"><tspan class="code-token">[[TEL_1]]</tspan> → <tspan class="code-restored">02 000 00 00</tspan></text>
+  </g>
+
+  <!-- ARROW 4 -> 5 -->
+  <path d="M 410 490 L 350 490" class="arrow" stroke="#3fb950" marker-end="url(#arrowhead-green)" />
+
+  <!-- STEP 5: Final Delivery -->
+  <g transform="translate(60, 415)">
+    <rect width="290" height="155" class="box-privacy" />
+    <text x="20" y="30" class="title" fill="#3fb950">5. Direct Replacement / Preview</text>
+    <text x="20" y="50" class="subtitle">0 Clipboard Leaks · Audit Record Exportable</text>
+
+    <rect x="16" y="62" width="258" height="52" rx="6" fill="#0d1117" stroke="#238636" />
+    <text x="24" y="82" class="code">"Appeler <tspan class="code-restored">DUPONT</tspan> au <tspan class="code-restored">02 000 00 00</tspan> :</text>
+    <text x="24" y="100" class="code">il ne parvient plus à ouvrir SAP."</text>
+
+    <rect x="16" y="122" width="258" height="22" rx="4" fill="#1b241e" />
+    <text x="145" y="137" class="badge" fill="#3fb950">✓ 2 tokens restored · 0.8s elapsed</text>
+  </g>
+
+  <!-- FOOTER: 5 CONCRETE REAL-WORLD USE CASES -->
+  <g transform="translate(40, 610)">
+    <rect width="980" height="120" fill="#161b22" stroke="#30363d" stroke-width="1" rx="10" />
+    <text x="24" y="30" class="label" fill="#f0f6fc">PROVEN SERVICE DESK USE CASES:</text>
+
+    <!-- UC 1 -->
+    <g transform="translate(24, 45)">
+      <rect width="176" height="60" rx="6" fill="#0d1117" stroke="#21262d" />
+      <text x="12" y="22" class="code" fill="#58a6ff" font-weight="bold">1. Quick Polish</text>
+      <text x="12" y="42" class="footer-text">Ctrl+Alt+Space instant</text>
+      <text x="12" y="54" class="footer-text">spelling &amp; grammar fix</text>
+    </g>
+
+    <!-- UC 2 -->
+    <g transform="translate(216, 45)">
+      <rect width="176" height="60" rx="6" fill="#0d1117" stroke="#21262d" />
+      <text x="12" y="22" class="code" fill="#3fb950" font-weight="bold">2. Ticket Triage</text>
+      <text x="12" y="42" class="footer-text">Turn raw user emails into</text>
+      <text x="12" y="54" class="footer-text">structured ITIL incidents</text>
+    </g>
+
+    <!-- UC 3 -->
+    <g transform="translate(408, 45)">
+      <rect width="176" height="60" rx="6" fill="#0d1117" stroke="#21262d" />
+      <text x="12" y="22" class="code" fill="#e3b341" font-weight="bold">3. Closure Notes</text>
+      <text x="12" y="42" class="footer-text">Generate professional</text>
+      <text x="12" y="54" class="footer-text">user + KB resolution logs</text>
+    </g>
+
+    <!-- UC 4 -->
+    <g transform="translate(600, 45)">
+      <rect width="176" height="60" rx="6" fill="#0d1117" stroke="#21262d" />
+      <text x="12" y="22" class="code" fill="#f778ba" font-weight="bold">4. IT Diagnostic</text>
+      <text x="12" y="42" class="footer-text">Guided troubleshooting</text>
+      <text x="12" y="54" class="footer-text">without leaking credentials</text>
+    </g>
+
+    <!-- UC 5 -->
+    <g transform="translate(792, 45)">
+      <rect width="164" height="60" rx="6" fill="#0d1117" stroke="#21262d" />
+      <text x="12" y="22" class="code" fill="#bc8cff" font-weight="bold">5. Translation</text>
+      <text x="12" y="42" class="footer-text">Cross-border support</text>
+      <text x="12" y="54" class="footer-text">with masked identifiers</text>
+    </g>
+  </g>
+</svg>
