@@ -13,6 +13,7 @@ from typing import Final
 
 from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import (
+    QBrush,
     QColor,
     QFont,
     QGuiApplication,
@@ -95,7 +96,7 @@ LIGHT: Final = Palette(
     success="#1a7f4b",
     warning="#9a6700",
     danger="#c1392b",
-    gradient=("#eef2ff", "#f6f0fb", "#eaf4fb"),
+    gradient=("#edf2fe", "#f5f1fc", "#eaf3fc"),
     tints={
         "green": "#1a7f4b",
         "orange": "#b45309",
@@ -121,7 +122,7 @@ DARK: Final = Palette(
     success="#2ebb77",
     warning="#e59834",
     danger="#e55353",
-    gradient=("#13152a", "#171936", "#121428"),
+    gradient=("#0f1327", "#161b3a", "#0f1225"),
     tints={
         "green": "#34d399",
         "orange": "#fb923c",
@@ -175,117 +176,180 @@ class GradientBackground(QWidget):
         h = float(self.height())
         rect = QRectF(0.0, 0.0, w, h)
 
-        path = QPainterPath()
-        path.addRoundedRect(rect, self._radius, self._radius)
-        painter.setClipPath(path)
+        # Coins arrondis et découpe propre
+        clip_path = QPainterPath()
+        clip_path.addRoundedRect(rect, self._radius, self._radius)
+        painter.setClipPath(clip_path)
 
-        # 1. Dégradé de fond principal
-        gradient = QLinearGradient(0.0, 0.0, w, h)
-        start, middle, end = self._palette.gradient
-        gradient.setColorAt(0.0, QColor(start))
-        gradient.setColorAt(0.45, QColor(middle))
-        gradient.setColorAt(1.0, QColor(end))
-        painter.fillPath(path, gradient)
-
-        # 2. Halos d'ambiance harmonieux (effets de lumière d'atelier)
         is_dark = self._palette.is_dark
-        spotlight = QRadialGradient(w * 0.35, 0.0, max(w * 0.7, 300.0))
+
+        # 1. Dégradé de fond principal fluide et profond
+        bg_gradient = QLinearGradient(0.0, 0.0, w * 0.9, h)
+        start, middle, end = self._palette.gradient
+        bg_gradient.setColorAt(0.0, QColor(start))
+        bg_gradient.setColorAt(0.50, QColor(middle))
+        bg_gradient.setColorAt(1.0, QColor(end))
+        painter.fillPath(clip_path, bg_gradient)
+
+        # 2. Halo d'ambiance supérieur doux (lumière zénithale discrète)
+        top_glow = QRadialGradient(w * 0.40, 0.0, max(w * 0.75, 380.0))
         if is_dark:
-            spotlight.setColorAt(0.0, QColor(99, 102, 241, 38))  # Indigo lumineux
-            spotlight.setColorAt(0.55, QColor(79, 70, 229, 12))
-            spotlight.setColorAt(1.0, QColor(0, 0, 0, 0))
+            top_glow.setColorAt(0.0, QColor(99, 102, 241, 35))  # Indigo lumineux
+            top_glow.setColorAt(0.55, QColor(79, 70, 229, 10))
+            top_glow.setColorAt(1.0, QColor(0, 0, 0, 0))
         else:
-            spotlight.setColorAt(0.0, QColor(44, 107, 237, 24))
-            spotlight.setColorAt(0.55, QColor(44, 107, 237, 8))
-            spotlight.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.fillRect(self.rect(), spotlight)
+            top_glow.setColorAt(0.0, QColor(59, 130, 246, 22))  # Bleu ciel doux
+            top_glow.setColorAt(0.60, QColor(99, 102, 241, 8))
+            top_glow.setColorAt(1.0, QColor(255, 255, 255, 0))
+        painter.fillRect(self.rect(), top_glow)
 
-        # Halo secondaire en bas à droite
-        accent_spot = QRadialGradient(w * 0.85, h * 0.85, max(w * 0.5, 200.0))
+        # 3. Vagues géométriques épurées (courbes générées harmoniques non animées)
+        # Nappe 1 : vague d'arrière-plan ample et douce
+        wave1_path = QPainterPath()
+        wave1_path.moveTo(0.0, h * 0.62)
+        wave1_path.cubicTo(
+            w * 0.22,
+            h * 0.48,
+            w * 0.46,
+            h * 0.74,
+            w * 0.72,
+            h * 0.58,
+        )
+        wave1_path.cubicTo(
+            w * 0.85,
+            h * 0.50,
+            w * 0.94,
+            h * 0.56,
+            w,
+            h * 0.54,
+        )
+        wave1_fill = QPainterPath(wave1_path)
+        wave1_fill.lineTo(w, h)
+        wave1_fill.lineTo(0.0, h)
+        wave1_fill.closeSubpath()
+
+        grad_wave1 = QLinearGradient(0.0, h * 0.50, w * 0.8, h)
         if is_dark:
-            accent_spot.setColorAt(0.0, QColor(56, 189, 248, 18))  # Cyan / bleu ciel
-            accent_spot.setColorAt(1.0, QColor(0, 0, 0, 0))
+            grad_wave1.setColorAt(0.0, QColor(79, 70, 229, 26))  # Indigo profond
+            grad_wave1.setColorAt(0.65, QColor(56, 189, 248, 12))  # Cyan subtil
+            grad_wave1.setColorAt(1.0, QColor(15, 23, 42, 6))
         else:
-            accent_spot.setColorAt(0.0, QColor(147, 51, 234, 14))  # Violet doux
-            accent_spot.setColorAt(1.0, QColor(255, 255, 255, 0))
-        painter.fillRect(self.rect(), accent_spot)
+            grad_wave1.setColorAt(0.0, QColor(99, 102, 241, 20))
+            grad_wave1.setColorAt(0.65, QColor(59, 130, 246, 10))
+            grad_wave1.setColorAt(1.0, QColor(241, 245, 249, 4))
+        painter.fillPath(wave1_fill, grad_wave1)
 
-        # 3. Lignes géométriques dessinées statiques (ondes harmoniques en filigrane)
-        curve_color = QColor(165, 180, 252, 22) if is_dark else QColor(44, 107, 237, 18)
-        curve_pen = QPen(curve_color)
-        curve_pen.setWidthF(1.0)
-        painter.setPen(curve_pen)
+        # Crête lumineuse de la vague 1
+        pen1_grad = QLinearGradient(0.0, 0.0, w, 0.0)
+        if is_dark:
+            pen1_grad.setColorAt(0.0, QColor(99, 102, 241, 0))
+            pen1_grad.setColorAt(0.30, QColor(129, 140, 248, 55))
+            pen1_grad.setColorAt(0.70, QColor(56, 189, 248, 45))
+            pen1_grad.setColorAt(1.0, QColor(99, 102, 241, 10))
+        else:
+            pen1_grad.setColorAt(0.0, QColor(99, 102, 241, 0))
+            pen1_grad.setColorAt(0.30, QColor(99, 102, 241, 45))
+            pen1_grad.setColorAt(0.70, QColor(59, 130, 246, 40))
+            pen1_grad.setColorAt(1.0, QColor(99, 102, 241, 10))
+        painter.strokePath(wave1_path, QPen(QBrush(pen1_grad), 1.0))
 
-        c1 = QPainterPath()
-        c1.moveTo(0.0, h * 0.28)
-        c1.cubicTo(w * 0.32, h * 0.12, w * 0.62, h * 0.42, w, h * 0.24)
-        painter.drawPath(c1)
+        # Nappe 2 : vague de premier plan, fluide et rythmée
+        wave2_path = QPainterPath()
+        wave2_path.moveTo(0.0, h * 0.76)
+        wave2_path.cubicTo(
+            w * 0.28,
+            h * 0.88,
+            w * 0.52,
+            h * 0.64,
+            w * 0.78,
+            h * 0.78,
+        )
+        wave2_path.cubicTo(
+            w * 0.88,
+            h * 0.84,
+            w * 0.95,
+            h * 0.79,
+            w,
+            h * 0.74,
+        )
+        wave2_fill = QPainterPath(wave2_path)
+        wave2_fill.lineTo(w, h)
+        wave2_fill.lineTo(0.0, h)
+        wave2_fill.closeSubpath()
 
-        c2 = QPainterPath()
-        c2.moveTo(0.0, h * 0.72)
-        c2.cubicTo(w * 0.35, h * 0.88, w * 0.68, h * 0.58, w, h * 0.76)
-        painter.drawPath(c2)
+        grad_wave2 = QLinearGradient(0.0, h * 0.65, w, h)
+        if is_dark:
+            grad_wave2.setColorAt(0.0, QColor(56, 189, 248, 20))  # Cyan lumineux
+            grad_wave2.setColorAt(0.50, QColor(99, 102, 241, 15))  # Indigo
+            grad_wave2.setColorAt(1.0, QColor(14, 165, 233, 4))
+        else:
+            grad_wave2.setColorAt(0.0, QColor(59, 130, 246, 16))
+            grad_wave2.setColorAt(0.50, QColor(147, 51, 234, 12))
+            grad_wave2.setColorAt(1.0, QColor(255, 255, 255, 0))
+        painter.fillPath(wave2_fill, grad_wave2)
 
-        c3 = QPainterPath()
-        c3.moveTo(w * 0.12, 0.0)
-        c3.cubicTo(w * 0.38, h * 0.48, w * 0.72, h * 0.42, w * 0.92, h)
-        painter.drawPath(c3)
+        # Crête lumineuse de la vague 2
+        pen2_grad = QLinearGradient(0.0, 0.0, w, 0.0)
+        if is_dark:
+            pen2_grad.setColorAt(0.0, QColor(56, 189, 248, 5))
+            pen2_grad.setColorAt(0.45, QColor(56, 189, 248, 70))
+            pen2_grad.setColorAt(0.80, QColor(129, 140, 248, 60))
+            pen2_grad.setColorAt(1.0, QColor(56, 189, 248, 15))
+        else:
+            pen2_grad.setColorAt(0.0, QColor(59, 130, 246, 5))
+            pen2_grad.setColorAt(0.45, QColor(59, 130, 246, 60))
+            pen2_grad.setColorAt(0.80, QColor(99, 102, 241, 50))
+            pen2_grad.setColorAt(1.0, QColor(59, 130, 246, 15))
+        painter.strokePath(wave2_path, QPen(QBrush(pen2_grad), 1.2))
 
-        # 4. Trame de dessin technique : micro-croix et grille discrète
-        cross_color = QColor(255, 255, 255, 14) if is_dark else QColor(30, 41, 59, 12)
-        cross_pen = QPen(cross_color)
-        cross_pen.setWidthF(1.0)
-        painter.setPen(cross_pen)
-        step = 32
-        for x in range(step, int(w), step):
-            for y in range(step, int(h), step):
-                painter.drawLine(x - 2, y, x + 2, y)
-                painter.drawLine(x, y - 2, x, y + 2)
+        # 4. Trait filigrane aérien (écho d'onde épuré)
+        echo_path = QPainterPath()
+        echo_path.moveTo(0.0, h * 0.44)
+        echo_path.cubicTo(
+            w * 0.35,
+            h * 0.32,
+            w * 0.65,
+            h * 0.54,
+            w,
+            h * 0.38,
+        )
+        echo_pen_grad = QLinearGradient(0.0, 0.0, w, 0.0)
+        if is_dark:
+            echo_pen_grad.setColorAt(0.0, QColor(147, 197, 253, 0))
+            echo_pen_grad.setColorAt(0.50, QColor(165, 180, 252, 28))
+            echo_pen_grad.setColorAt(1.0, QColor(147, 197, 253, 0))
+        else:
+            echo_pen_grad.setColorAt(0.0, QColor(59, 130, 246, 0))
+            echo_pen_grad.setColorAt(0.50, QColor(99, 102, 241, 24))
+            echo_pen_grad.setColorAt(1.0, QColor(59, 130, 246, 0))
+        painter.strokePath(echo_path, QPen(QBrush(echo_pen_grad), 0.9))
 
-        # 5. Repères de cadrage de dessin technique aux 4 coins (style blueprint d'atelier)
-        corner_color = QColor(99, 102, 241, 65) if is_dark else QColor(44, 107, 237, 50)
-        corner_pen = QPen(corner_color)
-        corner_pen.setWidthF(1.2)
-        painter.setPen(corner_pen)
-        marge = 12
-        longueur = 8
-        gauche, haut = marge, marge
-        droite, bas = int(w) - marge, int(h) - marge
+        # 5. Filet de bordure net
+        border_pen = QPen(QColor(self._palette.border))
+        border_pen.setWidthF(1.0)
+        painter.setPen(border_pen)
+        painter.drawPath(clip_path)
 
-        # Chaque coin est une équerre : un segment horizontal et un vertical
-        # partant du sommet. Les signes de direction évitent de répéter huit
-        # appels presque identiques, où une faute de recopie passe inaperçue.
-        for x, y, dx, dy in (
-            (gauche, haut, +1, +1),
-            (droite, haut, -1, +1),
-            (gauche, bas, +1, -1),
-            (droite, bas, -1, -1),
-        ):
-            painter.drawLine(x, y, x + dx * longueur, y)
-            painter.drawLine(x, y, x, y + dy * longueur)
-
-        # 6. Filet de bordure net
-        pen = QPen(QColor(self._palette.border))
-        pen.setWidth(1)
-        painter.setPen(pen)
-        painter.drawPath(path)
         painter.end()
 
 
 def resolve_theme(preference: str) -> Palette:
-    """Traduit la préférence (« auto », « light », « dark ») en palette.
+    """Traduit la préférence (« auto », « light », « dark », « sombre ») en palette.
 
+    Par défaut ou en cas de valeur non reconnue, le thème sombre est retenu.
     En mode automatique, on interroge la palette de Qt plutôt que le registre
     ou une API système : Qt sait déjà lire le réglage clair/sombre de Windows
     comme de la plupart des bureaux Linux.
     """
     match preference.strip().lower():
-        case "light":
+        case "light" | "clair":
             return LIGHT
-        case "dark":
+        case "dark" | "sombre":
             return DARK
-        case _:
+        case "auto":
             return DARK if _system_prefers_dark() else LIGHT
+        case _:
+            return DARK
 
 
 def _system_prefers_dark() -> bool:
@@ -326,8 +390,8 @@ def apply_theme(app: QApplication, palette: Palette) -> None:
     font.setHintingPreference(QFont.HintingPreference.PreferDefaultHinting)
     app.setFont(font)
 
-    app.setStyleSheet(stylesheet(palette))
     app.setPalette(_qt_palette(palette))
+    app.setStyleSheet(stylesheet(palette))
 
 
 def _qt_palette(palette: Palette) -> QPalette:
@@ -458,17 +522,17 @@ def stylesheet(p: Palette) -> str:
         border-radius: 8px;
     }}
     QFrame#helperBanner {{
-        background: rgba(23, 25, 50, 0.5);
+        background: {rgba(p.surface, 0.55)};
         border: 1px solid {p.border};
         border-radius: 8px;
     }}
     QFrame#actionRow, QFrame#historyRow {{
-        background: rgba(23, 25, 50, 0.65);
+        background: {rgba(p.surface, 0.70)};
         border: 1px solid {p.border};
         border-radius: 10px;
     }}
     QFrame#actionRow:hover, QFrame#historyRow:hover {{
-        background: rgba(33, 37, 72, 0.85);
+        background: {p.surface_hover};
         border-color: {p.accent};
     }}
     QScrollArea {{
@@ -573,6 +637,29 @@ def stylesheet(p: Palette) -> str:
         font-size: 13px;
         selection-background-color: {p.accent};
         selection-color: {p.accent_text};
+    }}
+    QListWidget, QListView, QTreeView, QTableView {{
+        background-color: {p.surface};
+        border: 1px solid {p.border};
+        border-radius: 8px;
+        color: {p.text};
+        padding: 4px;
+        outline: none;
+    }}
+    QListWidget::item, QListView::item {{
+        padding: 5px 8px;
+        border-radius: 6px;
+        color: {p.text};
+    }}
+    QListWidget::item:hover, QListView::item:hover {{
+        background-color: {p.surface_hover};
+    }}
+    QListWidget::item:selected, QListView::item:selected {{
+        background-color: {rgba(p.accent, 0.18)};
+        color: {p.text};
+    }}
+    QListWidget:focus, QListView:focus, QTreeView:focus, QTableView:focus {{
+        border-color: {p.accent};
     }}
     QCheckBox {{
         spacing: 8px;

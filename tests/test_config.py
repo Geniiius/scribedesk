@@ -16,6 +16,7 @@ def test_valeurs_par_defaut_prudentes() -> None:
     assert settings.provider.key == "ollama", "l'inférence locale est le défaut"
     assert settings.privacy.enabled is True
     assert settings.history.store_text is False, "aucun texte d'usager conservé par défaut"
+    assert settings.theme == "dark"
 
 
 def test_aller_retour_complet(tmp_path: Path) -> None:

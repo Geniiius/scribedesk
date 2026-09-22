@@ -190,7 +190,7 @@ class Settings:
     translation_targets: tuple[str, ...] = ("Français", "Anglais", "Espagnol", "Néerlandais")
     """Langues cibles proposées par l'action de traduction."""
 
-    theme: str = "auto"
+    theme: str = "dark"
     locale: str = "fr"
     streaming: bool = True
 
@@ -239,7 +239,7 @@ class Settings:
             translation_enabled=bool(raw.get("translation_enabled", False)),
             translation_targets=tuple(str(v) for v in raw.get("translation_targets", ()))
             or ("Français", "Anglais", "Espagnol", "Néerlandais"),
-            theme=str(raw.get("theme", "auto")),
+            theme=str(raw.get("theme", "dark")),
             locale=str(raw.get("locale", "fr")),
             streaming=bool(raw.get("streaming", True)),
         )

@@ -298,7 +298,10 @@ def test_les_sigles_maison_sont_lus(qapp: QApplication) -> None:
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(("preference", "attendu"), [("light", LIGHT), ("dark", DARK)])
+@pytest.mark.parametrize(
+    ("preference", "attendu"),
+    [("light", LIGHT), ("dark", DARK), ("sombre", DARK), ("clair", LIGHT)],
+)
 def test_resolution_du_theme(preference: str, attendu, qapp: QApplication) -> None:  # type: ignore[no-untyped-def]
     assert resolve_theme(preference) is attendu
 

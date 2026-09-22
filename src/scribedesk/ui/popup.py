@@ -149,7 +149,7 @@ class PopupWindow(QWidget):
         self._history = history or History(paths().ensure().history_file)
         self._selection = ""
         self._pending: Action | None = None
-        self._palette = resolve_theme("auto")
+        self._palette = resolve_theme("dark")
         self._buttons: list[tuple[QPushButton, Action]] = []
         self._current_view = "main"
         self._target_language = ""

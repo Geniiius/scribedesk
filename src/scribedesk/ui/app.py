@@ -10,8 +10,20 @@ from collections.abc import Mapping
 from logging.handlers import RotatingFileHandler
 from typing import Final
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QGuiApplication, QIcon, QPainter, QPixmap
+from PySide6.QtCore import QObject, QRectF, Qt, QTimer, Signal
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QFont,
+    QGuiApplication,
+    QIcon,
+    QLinearGradient,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QRadialGradient,
+)
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from ..config import Settings, paths
@@ -787,28 +799,112 @@ def _privacy_note(redaction: Redaction | None) -> str:
 
 
 def _app_icon() -> QIcon:
-    """Icône de l'application, peinte à l'exécution.
+    """Icône de l'application, peinte vectoriellement à l'exécution.
 
-    Aucun fichier n'est lu : charger une image depuis le dépôt donnerait une
-    icône à qui travaille sur les sources, et une autre à qui installe la roue,
-    puisque celle-ci n'embarque que ``src/scribedesk``. Un seul chemin de code,
-    donc un seul résultat.
+    Générée en plusieurs résolutions natives (du 16×16 au 256×256) pour garantir
+    une netteté parfaite dans la barre des tâches, la barre de titre et le plateau.
+    Le monogramme « SD » arbore un dégradé indigo profond avec un éclat lumineux
+    d'écriture intelligente.
     """
-    pixmap = QPixmap(64, 64)
+    icon = QIcon()
+    for size in (16, 20, 24, 32, 48, 64, 128, 256):
+        icon.addPixmap(_render_icon_pixmap(size))
+    return icon
+
+
+def _render_icon_pixmap(size: int) -> QPixmap:
+    """Peint un pixmap d'icône au pixel près pour une taille donnée."""
+    pixmap = QPixmap(size, size)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.setBrush(Qt.GlobalColor.darkCyan)
-    painter.setPen(Qt.PenStyle.NoPen)
-    painter.drawRoundedRect(4, 4, 56, 56, 14, 14)
-    painter.setPen(Qt.GlobalColor.white)
-    font = painter.font()
-    font.setPointSize(30)
-    font.setBold(True)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
+    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+
+    s = float(size)
+    # Zéro marge pour les petites tailles (16, 20, 24) pour remplir 100% du cadre
+    m = 0.0 if s <= 24 else s * 0.015
+    radius = s * 0.22
+    rect = QRectF(m, m, s - 2 * m, s - 2 * m)
+
+    # 1. Ombre douce portée sous le squircle pour les tailles moyennes et grandes
+    if s >= 32:
+        shadow_path = QPainterPath()
+        shadow_path.addRoundedRect(rect.translated(0, s * 0.035), radius, radius)
+        painter.fillPath(shadow_path, QColor(10, 15, 35, 80))
+
+    # 2. Base squircle
+    bg_path = QPainterPath()
+    bg_path.addRoundedRect(rect, radius, radius)
+
+    # 3. Dégradé cyber-indigo profond et moderne (assorti au thème ScribeDesk)
+    grad = QLinearGradient(rect.topLeft(), rect.bottomRight())
+    grad.setColorAt(0.0, QColor(35, 30, 85))  # Indigo nuit profond (#231e55)
+    grad.setColorAt(0.45, QColor(49, 46, 129))  # Indigo royal (#312e81)
+    grad.setColorAt(1.0, QColor(37, 99, 235))  # Bleu électrique (#2563eb)
+    painter.fillPath(bg_path, grad)
+
+    # 4. Reflet vitré et lueur zénithale
+    painter.save()
+    painter.setClipPath(bg_path)
+    glow = QRadialGradient(rect.center().x(), rect.top() - s * 0.05, rect.width() * 0.85)
+    glow.setColorAt(0.0, QColor(255, 255, 255, 90))
+    glow.setColorAt(0.45, QColor(165, 180, 252, 25))
+    glow.setColorAt(1.0, QColor(0, 0, 0, 0))
+    painter.fillRect(rect, glow)
+
+    # 5. Filet intérieur lumineux
+    inner_pen = QPen(QColor(165, 180, 252, 100), max(0.8, s * 0.022))
+    painter.setPen(inner_pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+    painter.drawPath(bg_path)
+    painter.restore()
+
+    # 6. Monogramme « SD » géant et ultra lisible (~68% de la hauteur)
+    font = QFont()
+    font.setFamilies(["Segoe UI", "Inter", "SF Pro Display", "Arial", "sans-serif"])
+    if s <= 16:
+        pixel_size = 11
+    elif s <= 20:
+        pixel_size = 14
+    elif s <= 24:
+        pixel_size = 16
+    else:
+        pixel_size = int(s * 0.68)
+    font.setPixelSize(pixel_size)
+    font.setWeight(QFont.Weight.ExtraBold)
+    font.setLetterSpacing(QFont.SpacingType.AbsoluteSpacing, -max(0.4, s * 0.02))
     painter.setFont(font)
-    painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "S")
+
+    text_rect = QRectF(rect.x(), rect.y() - s * 0.015, rect.width(), rect.height())
+
+    if s >= 32:
+        # Ombre portée de contraste sous les lettres
+        painter.setPen(QColor(10, 12, 28, 170))
+        painter.drawText(text_rect.translated(0, s * 0.025), Qt.AlignmentFlag.AlignCenter, "SD")
+        painter.setPen(QColor(56, 189, 248, 120))
+        painter.drawText(text_rect.translated(0, s * 0.01), Qt.AlignmentFlag.AlignCenter, "SD")
+
+    # Lettres blanches nettes
+    painter.setPen(QColor(255, 255, 255))
+    painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, "SD")
+
+    # 7. Étincelle d'écriture intelligente en haut à droite
+    if s >= 48:
+        cx = rect.right() - s * 0.12
+        cy = rect.top() + s * 0.14
+        sr = s * 0.045
+        star = QPainterPath()
+        star.moveTo(cx, cy - sr)
+        star.quadTo(cx, cy, cx + sr, cy)
+        star.quadTo(cx, cy, cx, cy + sr)
+        star.quadTo(cx, cy, cx - sr, cy)
+        star.quadTo(cx, cy, cx, cy - sr)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.fillPath(star, QColor(56, 189, 248))
+
     painter.end()
-    return QIcon(pixmap)
+    return pixmap
 
 
 def _configure_logging() -> None:
