@@ -731,11 +731,25 @@ def test_la_fenetre_de_reponse_est_deplacable_a_la_souris(qapp: QApplication) ->
     win.hide()
 
 
-def test_settings_visibilite_cle_et_enregistrement(qapp: QApplication) -> None:
+def test_settings_visibilite_cle_et_enregistrement(
+    qapp: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Le bouton œil bascule le mode echo et enregistrer sauvegarde la clé."""
     from PySide6.QtWidgets import QLineEdit
 
-    from scribedesk.secrets import delete_api_key, get_api_key, set_api_key
+    from scribedesk.ui import settings as settings_ui
+
+    # Le trousseau du système n'a pas sa place dans une suite de tests. Sur un
+    # poste de développement, celle-ci y déposait une entrée bien réelle ; sur
+    # une machine d'intégration continue, où aucun coffre n'existe,
+    # l'enregistrement échouait et le test avec — alors que le code se
+    # comportait correctement, en refusant d'écrire un secret ailleurs que dans
+    # le trousseau. Un coffre en mémoire exerce le même chemin sans rien
+    # laisser derrière lui.
+    coffre: dict[str, str] = {}
+    monkeypatch.setattr(settings_ui, "get_api_key", lambda cle: coffre.get(cle, ""))
+    monkeypatch.setattr(settings_ui, "set_api_key", coffre.__setitem__)
+    monkeypatch.setattr(settings_ui, "delete_api_key", lambda cle: coffre.pop(cle, None))
 
     window = SettingsWindow(Settings())
     window._provider.setCurrentIndex(window._provider.findData("custom"))
@@ -749,18 +763,10 @@ def test_settings_visibilite_cle_et_enregistrement(qapp: QApplication) -> None:
     window._toggle_key_btn.click()
     assert window._api_key.echoMode() == QLineEdit.EchoMode.Password
 
-    # Enregistrement sans toucher aux clés des vrais fournisseurs
-    existant = get_api_key("custom")
-    try:
-        window._api_key.setText("test_mock_key_123")
-        window._save_btn.click()
-        assert "succès" in window._status.text()
-        assert get_api_key("custom") == "test_mock_key_123"
-    finally:
-        if existant:
-            set_api_key("custom", existant)
-        else:
-            delete_api_key("custom")
+    window._api_key.setText("test_mock_key_123")
+    window._save_btn.click()
+    assert "succès" in window._status.text()
+    assert coffre["custom"] == "test_mock_key_123"
 
 
 def test_response_prompt_for_input_et_raccourci_ctrl_entree(qapp: QApplication) -> None:

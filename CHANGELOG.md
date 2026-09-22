@@ -25,6 +25,13 @@ Ce projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 - Le numéro de version n'est plus déclaré qu'à un seul endroit
   (`src/scribedesk/__init__.py`) ; `pyproject.toml` le lit.
 
+### Corrigé
+
+- La suite de tests ne touche plus ni au trousseau ni aux préférences réelles
+  de la machine qui l'exécute : elle y déposait une clé et pouvait écraser la
+  configuration de l'utilisateur. Elle passe désormais aussi là où aucun coffre
+  système n'existe — conteneur, serveur, intégration continue.
+
 ### Retiré
 
 - `uv.lock` : ni la documentation ni l'intégration continue ne s'en servaient.
