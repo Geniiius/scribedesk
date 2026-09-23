@@ -120,6 +120,16 @@ def _rgba(hex_color: str, alpha: float) -> str:
     return f"rgba({color.red()}, {color.green()}, {color.blue()}, {alpha:.2f})"
 
 
+class _GridScrollArea(QScrollArea):
+    """Zone défilante de la grille adaptant son sizeHint à son contenu."""
+
+    def sizeHint(self) -> QSize:  # noqa: N802 - API Qt
+        widget = self.widget()
+        if widget is not None:
+            return widget.sizeHint()
+        return super().sizeHint()
+
+
 class PopupWindow(QWidget):
     """Sélecteur d'action affiché sous le curseur.
 
@@ -182,6 +192,7 @@ class PopupWindow(QWidget):
 
         card = QFrame(self)
         card.setObjectName("card")
+        self._card = card
         outer.addWidget(card)
 
         layout = QVBoxLayout(card)
@@ -327,7 +338,9 @@ class PopupWindow(QWidget):
         else:
             self._count.setText(f"{len(self._library)} actions")
 
-        self.adjustSize()
+        self._update_window_geometry(
+            move_to_cursor=False if self.isVisible() else not self._user_moved
+        )
 
     def _restyle_tool_buttons(self) -> None:
         """Met à jour l'icône des outils selon leur état actif/inactif."""
@@ -368,7 +381,7 @@ class PopupWindow(QWidget):
 
     def _build_grid(self, parent: QWidget) -> QScrollArea:
         """Grille des actions, dans une zone défilante si elle déborde."""
-        area = QScrollArea(parent)
+        area = _GridScrollArea(parent)
         area.setWidgetResizable(True)
         area.setFrameShape(QFrame.Shape.NoFrame)
         area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -631,7 +644,6 @@ class PopupWindow(QWidget):
             self._custom.setPlaceholderText("Ecrivez un prompt personnalisé")
 
         self._custom.clear()
-        self.adjustSize()
         self._move_near_cursor()
 
         self.show()
@@ -645,46 +657,70 @@ class PopupWindow(QWidget):
         self._selection = ""
         self._cancel_params()
         self._switch_view("history")
-        self.adjustSize()
         self._move_near_cursor()
 
         self.show()
         self.raise_()
         self.activateWindow()
 
-    def _move_near_cursor(self) -> None:
-        """Positionne la fenêtre sans la laisser déborder de l'écran."""
+    def _update_window_geometry(self, move_to_cursor: bool = False) -> None:
+        """Recalcule la taille et la position de la fenêtre selon son contenu actif.
+
+        Ne fige jamais définitivement la hauteur par ``setFixedHeight`` : un tel
+        verrouillage empêchait la fenêtre de retrouver sa taille complète après
+        l'affichage d'une vue plus courte (paramètres d'action, historique).
+        """
+        self.setMinimumHeight(0)
+        self.setMaximumHeight(_MAX_HEIGHT)
+
+        if hasattr(self, "_card"):
+            self._card.updateGeometry()
+            layout = self._card.layout()
+            if layout is not None:
+                layout.activate()
+
+        self.updateGeometry()
+        root_layout = self.layout()
+        if root_layout is not None:
+            root_layout.activate()
+
+        self.adjustSize()
+
         cursor = QCursor.pos()
-        screen = QGuiApplication.screenAt(cursor) or QGuiApplication.primaryScreen()
-        # Les stubs déclarent primaryScreen() non optionnel ; il renvoie
-        # pourtant None quand aucun écran n'est attaché.
+        if move_to_cursor:
+            screen = QGuiApplication.screenAt(cursor) or QGuiApplication.primaryScreen()
+        else:
+            screen = QGuiApplication.screenAt(self.pos()) or QGuiApplication.primaryScreen()
+
         if screen is None:  # pragma: no cover - sans écran attaché
-            self.move(cursor)  # type: ignore[unreachable]
+            if move_to_cursor:  # type: ignore[unreachable]
+                self.move(cursor)
             return
 
         available = screen.availableGeometry()
-        height = min(self.sizeHint().height(), _MAX_HEIGHT, available.height() - 40)
-        self.setFixedHeight(height)
-        width = max(self.sizeHint().width(), _MIN_WIDTH)
+        max_h = min(_MAX_HEIGHT, available.height() - 40)
+        self.setMaximumHeight(max_h)
+        height = min(self.sizeHint().height(), max_h)
+        width = max(min(self.sizeHint().width(), available.width() - 40), _MIN_WIDTH)
 
-        x = min(cursor.x() + _CURSOR_OFFSET, available.right() - width - 8)
-        y = min(cursor.y() + _CURSOR_OFFSET, available.bottom() - height - 8)
-        self.move(max(available.left() + 8, x), max(available.top() + 8, y))
+        self.resize(width, height)
+
+        if move_to_cursor:
+            x = min(cursor.x() + _CURSOR_OFFSET, available.right() - width - 8)
+            y = min(cursor.y() + _CURSOR_OFFSET, available.bottom() - height - 8)
+            self.move(max(available.left() + 8, x), max(available.top() + 8, y))
+        else:
+            x = max(available.left() + 8, min(self.x(), available.right() - width - 8))
+            y = max(available.top() + 8, min(self.y(), available.bottom() - height - 8))
+            self.move(x, y)
+
+    def _move_near_cursor(self) -> None:
+        """Positionne la fenêtre près du curseur sans la laisser déborder de l'écran."""
+        self._update_window_geometry(move_to_cursor=True)
 
     def _ensure_within_screen(self) -> None:
         """Garantit que la fenêtre reste entièrement dans l'écran visible."""
-        screen = QGuiApplication.screenAt(self.pos()) or QGuiApplication.primaryScreen()
-        if screen is None:  # pragma: no cover - sans écran attaché
-            return  # type: ignore[unreachable]
-
-        available = screen.availableGeometry()
-        height = min(self.sizeHint().height(), _MAX_HEIGHT, available.height() - 40)
-        self.setFixedHeight(height)
-        width = max(self.sizeHint().width(), _MIN_WIDTH)
-
-        x = max(available.left() + 8, min(self.x(), available.right() - width - 8))
-        y = max(available.top() + 8, min(self.y(), available.bottom() - height - 8))
-        self.move(x, y)
+        self._update_window_geometry(move_to_cursor=False)
 
     # -- Interactions -----------------------------------------------------
 

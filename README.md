@@ -23,16 +23,30 @@ utilisable.
 
 Un agent de Service Desk écrit toute la journée des notes qui contiennent des
 données à caractère personnel : noms, numéros de téléphone, adresses, identifiants
-de connexion. Lui donner un assistant branché sur une API américaine, c'est
+de connexion, adresses IP. Lui donner un assistant branché sur une API américaine, c'est
 exporter ces données hors de l'Union européenne à chaque correction de faute
-d'orthographe.
+d'orthographe ou mise en forme de ticket.
 
 Les deux réponses habituelles sont insatisfaisantes : interdire l'outil — l'agent
 continue d'écrire mal, ou utilise ChatGPT dans son navigateur sans aucun
 garde-fou — ou tout héberger en local, coûteux et souvent hors de portée d'un
-petit service.
+service informatique.
 
-ScribeDesk propose une troisième voie.
+ScribeDesk propose une troisième voie : **l'anonymisation réversible en mémoire vive**.
+
+### Exemple concret d'un problème rédigé
+
+Voici une note brute typique rédigée à la volée par un technicien support lors d'un appel :
+
+```text
+Bonjour,
+
+L'agent Jean-Marc DUPONT (dupontj01, tel 01 42 68 55 00) signale un blocage sur SAP depuis ce matin 08h30 suite à la mise à jour Windows.
+
+Poste : WS-PARIS-042 (IP 192.168.12.84). Erreur SSO Kerberos. Compte bloqué après 3 essais. Pouvez-vous réinitialiser le mot de passe svp ?
+
+Urgent pour la clôture comptable en cours. Merci !
+```
 
 ## Comment ça marche
 
@@ -40,10 +54,18 @@ ScribeDesk propose une troisième voie.
   <img src="docs/architecture.svg" alt="ScribeDesk Zero-Leak Architecture & Data Pipeline" width="100%">
 </p>
 
-Le fournisseur reçoit une phrase grammaticalement complète — il peut donc la
-corriger correctement — mais vidée de toute donnée identifiante. `SAP` reste
-visible : c'est un nom d'application, pas une donnée personnelle, et le modèle en
-a besoin pour comprendre le contexte.
+1. **Substitution locale (Zero-Leak) :** Avant tout départ vers le réseau, ScribeDesk détecte et remplace les données identifiantes par des jetons temporaires conservés uniquement en RAM :
+   ```text
+   Bonjour,
+
+   L'agent [[NOM_1]] ([[UID_1]], tel [[TEL_1]]) signale un blocage sur SAP depuis ce matin 08h30 suite à la mise à jour Windows.
+
+   Poste : WS-PARIS-042 (IP [[IP_1]]). Erreur SSO Kerberos. Compte bloqué après 3 essais. Pouvez-vous réinitialiser le mot de passe svp ?
+
+   Urgent pour la clôture comptable en cours. Merci !
+   ```
+2. **Traitement par le modèle :** Le fournisseur cloud reçoit une phrase grammaticalement complète et cohérente — il peut donc la comprendre, la corriger ou la restructurer — mais vidée de toute donnée personnelle. `SAP` ou `SSO Kerberos` restent visibles : ce sont des termes techniques essentiels pour le modèle.
+3. **Restauration transparente :** Dès réception de la réponse, les jetons `[[...]]` sont réassociés à leurs valeurs d'origine. L'agent récupère immédiatement le texte final prêt à l'emploi.
 
 ## Essayer en trente secondes
 
@@ -168,8 +190,8 @@ remettre.
 
 | Raccourci | Effet |
 |---|---|
-| `Ctrl+Espace` | Ouvre la palette : 10 actions, consigne libre, historique, éditeur |
-| `Ctrl+Alt+Espace` | Applique l'action par défaut et remplace la sélection |
+| `Ctrl+Espace` | Ouvre la palette : 11 actions, consigne libre, historique, éditeur |
+| `Ctrl+Alt+Espace` | Applique l'action par défaut et remplace la sélection en un clic |
 
 <p align="center">
   <img src="docs/palette.png" alt="Palette d'actions (Ctrl+Espace)" width="48%">
@@ -177,10 +199,65 @@ remettre.
   <img src="docs/result.png" alt="Fenêtre de résultat et comparaison" width="48%">
 </p>
 
-Le second existe parce qu'un relevé d'usage réel montrait que **9 appels sur 10**
+Le second raccourci existe parce qu'un relevé d'usage réel montrait que **9 appels sur 10**
 portaient sur la même action, sur des textes de 80 caractères en médiane. Passer
 par la palette puis par une fenêtre de résultat pour corriger un accent coûtait
 six gestes ; celui-ci en coûte un. Une pastille éphémère signale la progression.
+
+## Les boutons d'action du Service Desk
+
+La palette propose **11 actions spécialisées** conçues pour couvrir l'intégralité du cycle de vie d'un ticket :
+
+### 1. Qualification & Description du ticket
+
+| Action | Rôle métier | Transformation apportée |
+|---|---|---|
+| **Description** | Structuration ITIL | Transforme des notes brutes en fiche d'incident normée (*Description*, *Tests effectués*, *Informations utiles*, *Coordonnées*). |
+| **Relecture et correction** | Nettoyage express | Corrige l'orthographe, les accords et la ponctuation sans altérer le style ni le vocabulaire technique. |
+| **Améliore mon écrit ▸** | Posture & Clarté | Reformule le message en adaptant le ton (*Formel*, *Neutre*, *Empathique*, *Direct*) selon l'interlocuteur. |
+| **Brève Génération** | Titrage normé | Rédige un titre percutant (60 à 100 caractères) adapté au champ *Objet* ou *Titre court* de l'outil de billetterie. |
+| **Analyseur de tickets mail ▸** | Dépouillement e-mail | Analyse un courriel utilisateur complexe pour en extraire le problème, l'urgence et les actions immédiates recommandées. |
+
+### 2. Diagnostic & Résolution technique
+
+| Action | Rôle métier | Transformation apportée |
+|---|---|---|
+| **Aide au diagnostic** | Analyse d'incident | Identifie la cause probable à partir des messages d'erreur et symptômes, puis suggère des étapes de résolution ordonnées. |
+| **Note de résolution ▸** | Clôture de ticket | Rédige une note de clôture soignée destinée à l'usager ou à la base de connaissances (cause racine, action corrective, conseils préventifs). |
+| **Résumé** | Synthèse de dossier | Résume l'historique d'un ticket à rallonge pour faciliter les escalades ou les changements d'équipe. |
+
+### 3. Contrôle qualité & International
+
+| Action | Rôle métier | Transformation apportée |
+|---|---|---|
+| **Vérification qualité description** | Audit de complétude | Contrôle que le ticket contient tous les éléments indispensables (contexte, erreur, impact) et suggère des ajouts. |
+| **Vérification qualité résolution ▸** | Audit de clôture | Valide que la solution documentée est claire, reproductible et directement compréhensible par le destinataire. |
+| **Traduction ▸** | Support multilingue | Traduit fidèlement dans la langue cible (*anglais, espagnol, etc.*) en respectant les termes techniques et le registre choisi. |
+
+---
+
+### Résultat obtenu avec le bouton « Description »
+
+Appliqué à l'exemple de problème rédigé plus haut, le bouton **Description** produit automatiquement ce découpage structuré, prêt à être copié dans votre outil de billetterie (*ServiceNow, Jira, EasyVista, Zendesk*) :
+
+```markdown
+**Description**
+L'agent signale un blocage d'accès à l'application SAP survenu à 08h30 à la suite de la mise à jour Windows. Le compte utilisateur est verrouillé après 3 tentatives infructueuses liées à une défaillance de l'authentification SSO Kerberos.
+
+**Tests effectués**
+- 3 tentatives de connexion effectuées (ayant entraîné le verrouillage du compte).
+
+**Informations utiles**
+- Contexte : Incident survenu suite à la mise à jour Windows à 08h30.
+- Application concernée : SAP.
+- Environnement / Poste : WS-PARIS-042 (IP 192.168.12.84).
+- Message d'erreur : Erreur SSO Kerberos.
+- Impact : Blocage urgent en pleine période de clôture comptable.
+
+**Coordonnées de contact**
+- Jean-Marc DUPONT (identifiant : dupontj01).
+- Téléphone : 01 42 68 55 00.
+```
 
 ## Ce que fait la détection
 

@@ -230,6 +230,40 @@ def test_le_popup_demande_les_parametres_avant_de_lancer(qapp: QApplication) -> 
     assert envoyes and envoyes[0][1] == {"ton": "A"}
 
 
+def test_la_palette_retrouve_sa_taille_apres_parametre_ou_reouverture(qapp: QApplication) -> None:
+    """La palette ne doit pas rester tronquée après l'affichage d'un panneau plus court.
+
+    Auparavant, `setFixedHeight` verrouillait la hauteur minimale et maximale
+    lors d'un passage par la vue paramètres ou l'historique, bloquant la
+    réouverture suivante (Ctrl+Space) à une taille incomplète.
+    """
+    library = load_library()
+    popup = PopupWindow(library)
+    popup.present("test")
+    taille_initiale = popup.height()
+    assert taille_initiale >= 400, f"taille initiale trop petite : {taille_initiale}"
+
+    # Choix d'une action à paramètres courts
+    actions_avec_params = [a for _, a in popup._buttons if a.parameters]
+    assert actions_avec_params, "au moins une action avec paramètres requise"
+    popup._choose(actions_avec_params[0])
+    taille_params = popup.height()
+    assert taille_params < taille_initiale, "la vue paramètres doit être plus compacte"
+
+    # 1. Annulation / retour à la vue principale
+    popup._cancel_params()
+    assert popup.height() == taille_initiale, "la palette doit reprendre sa taille complète"
+
+    # 2. Re-sélection d'une action à paramètre, fermeture puis réouverture (Ctrl+Space)
+    popup._choose(actions_avec_params[0])
+    popup.hide()
+    popup.present("nouveau texte")
+    assert popup.height() == taille_initiale, (
+        f"la fenêtre rouverte doit retrouver sa hauteur complète ({taille_initiale}px), "
+        f"obtenu : {popup.height()}px"
+    )
+
+
 def test_action_sans_parametre_part_immediatement(qapp: QApplication) -> None:
     sans = Action(name="Sans", instruction="i")
     popup = PopupWindow(ActionLibrary([sans]))
